@@ -16,7 +16,7 @@ export const CustomButton = ({
     <button
       {...otherProps}
       disabled={loading}
-      className={`rounded-full px-4 py-2 text-white font-semibold bg-gradient-to-tr from-emerald-400 to-emerald-600 flex justify-center items-center cursor-pointer ${otherStyle}`}
+      className={`rounded-full px-4 py-2 text-white font-semibold bg-gradient-to-r from-emerald-400 to-emerald-600 shadow-lg shadow-transparent hover:scale-105 hover:shadow-emerald-200 duration-200 flex justify-center items-center cursor-pointer ${otherStyle}`}
     >
       {loading ? (
         <>

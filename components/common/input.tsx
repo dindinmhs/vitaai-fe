@@ -31,7 +31,7 @@ export const CustomInput = ({
         >
           {title}
         </label>
-        <div className="flex w-full p-2 bg-white gap-2 border border-gray-300 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 rounded-lg transition-all duration-200">
+        <div className="flex w-full p-2 gap-2 border border-gray-300 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 rounded-lg transition-all duration-200">
           <input
             id={title}
             placeholder={`Masukan ${title}`}
@@ -44,7 +44,7 @@ export const CustomInput = ({
           <button
             type="button"
             onClick={() => setHide(!isHide)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 cursor-pointer"
           >
             {isHide ? <FaRegEyeSlash size={18} /> : <FaRegEye size={18} />}
           </button>
@@ -66,7 +66,7 @@ export const CustomInput = ({
         <textarea
           id={title}
           placeholder={`Masukan ${title}`}
-          className="w-full p-2 border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-sm"
+          className="w-full p-2 border border-gray-300 focus-within:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-sm"
           onChange={handleChange}
           required={required}
           value={value}
@@ -88,7 +88,7 @@ export const CustomInput = ({
       id={title}
       placeholder={`Masukan ${title}`}
       type={type}
-      className="w-full p-2 border border-gray-300 focus:borderemerald-500 focus:ring-1 focus:emerald-red-500 rounded-lg transition-all duration-200 text-sm"
+      className="w-full p-2 border border-gray-300 focus:ring-1 focus-within:ring-emerald-500 focus-within:border-emerald-500 rounded-lg transition-all duration-200 text-sm focus:outline-none"
       onChange={handleChange}
       required={required}
       accept={type === "file" ? "image/*" : undefined}
