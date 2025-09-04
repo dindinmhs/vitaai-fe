@@ -6,13 +6,15 @@ import { CustomButton } from "../common/button";
 import { Logo } from "../common/logo";
 import useApiRequest from "hooks/request";
 import apiClient from "services/api-service";
+import useAuthStore from "hooks/auth";
+import type { SignInRes } from "types/auth";
 
 export const SignInForm = () => {
-  const { loading, error, makeRequest } = useApiRequest<unknown, string>();
+  const { loading, error, makeRequest } = useApiRequest<SignInRes, string>();
 
    const navigate = useNavigate()
 
-  // const { setUser } = useAuthStore();
+  const { setUser } = useAuthStore();
 
   // const router = useRouter();
 
@@ -29,17 +31,12 @@ export const SignInForm = () => {
       const data = await makeRequest(() =>
         apiClient.post("/auth/signin", form)
       );
-      console.log(data);
-      // if (data) {
-      //   setUser({
-      //     accessToken: data.accessToken,
-      //     refreshToken: data.refreshToken,
-      //     name: data.name,
-      //     email: data.email,
-      //     userId: data.userId,
-      //     userRole: data.userRole,
-      //   });
-      // }
+      if (data) {
+        setUser({
+          accessToken: data.accessToken,
+          userRole: data.userRole,
+        });
+      }
       formRef.current?.reset();
       await navigate("/chat")
     } catch (err) {

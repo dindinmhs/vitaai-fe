@@ -2,9 +2,6 @@ import type { TimeStamp } from "./common";
 
 export interface SignInRes {
     accessToken : string;
-    email : string;
-    userId : string;
-    name : string;
     userRole : 'ADMIN'|'USER'
 }
 
