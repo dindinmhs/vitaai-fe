@@ -5,55 +5,86 @@ import { NewChatButton } from "./sidebar/new-chat-button";
 import { ChatHistory } from "./sidebar/chat-history";
 import { ProfileSection } from "./sidebar/profile-section";
 import { ProfileModal } from "../common/profile-modal";
-import useAuthStore from "hooks/auth";
 import { useNavigate } from "react-router";
+import useAuthStore from "hooks/auth";
+import { useAutoFetchUserProfile } from "hooks/user";
+import { useAutoFetchConversations, useConversations } from "hooks/conversation";
+import { formatConversationForUI } from "utils/conversation";
 
 export const SideBar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [hoveredChat, setHoveredChat] = useState<number | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [hoveredChat, setHoveredChat] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  const {clearUser} = useAuthStore()
-  const navigate = useNavigate()
+  const { clearUser } = useAuthStore();
+  const navigate = useNavigate();
+  
+  // Auto-fetch user profile
+  const { user: userProfile, loading: profileLoading } = useAutoFetchUserProfile();
+  
+  // Auto-fetch conversations
+  const { conversations, loading: conversationsLoading } = useAutoFetchConversations();
+  const { createConversation, renameConversation, deleteConversation } = useConversations();
 
-  // Data dummy untuk riwayat obrolan
-  const chatHistory = [
-    { id: 1, title: "Cara membuat website", timestamp: "2 jam lalu", preview: "Bagaimana cara membuat website dengan React?" },
-    { id: 2, title: "Tips belajar programming", timestamp: "1 hari lalu", preview: "Apa tips terbaik untuk belajar programming?" },
-    { id: 3, title: "Perbedaan Frontend vs Backend", timestamp: "2 hari lalu", preview: "Jelaskan perbedaan frontend dan backend" },
-    { id: 4, title: "Database untuk pemula", timestamp: "3 hari lalu", preview: "Rekomendasi database untuk pemula" },
-    { id: 5, title: "API REST vs GraphQL", timestamp: "1 minggu lalu", preview: "Kapan menggunakan REST vs GraphQL?" },
-    { id: 6, title: "API REST vs GraphQL", timestamp: "1 minggu lalu", preview: "Kapan menggunakan REST vs GraphQL?" },
-    { id: 7, title: "API REST vs GraphQL", timestamp: "1 minggu lalu", preview: "Kapan menggunakan REST vs GraphQL?" },
-  ];
+  // Format conversations untuk UI
+  const formattedConversations = formatConversationForUI(conversations);
 
   // Filter chat berdasarkan search
-  const filteredChatHistory = chatHistory.filter(
+  const filteredChatHistory = formattedConversations.filter(
     (chat) =>
       chat.title.toLowerCase().includes(search.toLowerCase()) ||
       chat.preview.toLowerCase().includes(search.toLowerCase())
   );
 
-  // User data - dalam implementasi nyata, ini akan datang dari context/props
-  const [userData, setUserData] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "JD"
-  });
-
-  const handleNewChat = () => {
-    console.log("Create new chat");
+  // Transform user data untuk komponen
+  const userData = userProfile ? {
+    name: userProfile.name,
+    email: userProfile.email,
+    avatar: userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+    imgUrl: userProfile.imgUrl
+  } : {
+    name: "Loading...",
+    email: "Loading...",
+    avatar: "L"
   };
 
-  const handleRename = (id: number) => {
-    console.log("Rename chat:", id);
+  const handleNewChat = async () => {
+    try {
+      const newConversation = await createConversation('New Chat');
+      console.log("Created new chat:", newConversation);
+      // Navigate to new conversation
+      // navigate(`/chat/${newConversation.id}`);
+    } catch (error) {
+      console.error("Failed to create new chat:", error);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    console.log("Delete chat:", id);
+  const handleRename = async (id: string) => {
+    try {
+      const newTitle = prompt('Enter new title:');
+      if (newTitle && newTitle.trim()) {
+        await renameConversation(id, newTitle.trim());
+        console.log("Renamed chat:", id);
+      }
+    } catch (error) {
+      console.error("Failed to rename chat:", error);
+      alert('Failed to rename conversation');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      if (confirm('Are you sure you want to delete this conversation?')) {
+        await deleteConversation(id);
+        console.log("Deleted chat:", id);
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      alert('Failed to delete conversation');
+    }
   };
 
   const handleSettings = () => {
@@ -61,14 +92,8 @@ export const SideBar = () => {
   };
 
   const handleLogout = () => {
-    clearUser()
-    navigate("/", {replace:true})
-  };
-
-  const handleUpdateProfile = (updatedUser: typeof userData) => {
-    setUserData(updatedUser);
-    // Dalam implementasi nyata, simpan ke context/server
-    console.log("Profile updated:", updatedUser);
+    clearUser();
+    navigate("/", { replace: true });
   };
 
   return (
@@ -96,7 +121,7 @@ export const SideBar = () => {
             placeholder="Cari chat..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 mb-2 text-sm"
+            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 mb-2 text-sm"
           />
         </div>
       )}
@@ -110,6 +135,7 @@ export const SideBar = () => {
         onDropdownChange={setOpenDropdown}
         onRename={handleRename}
         onDelete={handleDelete}
+        loading={conversationsLoading}
       />
 
       <ProfileSection
@@ -119,14 +145,16 @@ export const SideBar = () => {
         onDropdownChange={setOpenProfileDropdown}
         onSettings={handleSettings}
         onLogout={handleLogout}
+        loading={profileLoading}
       />
 
-      <ProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        user={userData}
-        onUpdateProfile={handleUpdateProfile}
-      />
+      {userProfile && (
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={userProfile}
+        />
+      )}
     </motion.div>
   );
 };

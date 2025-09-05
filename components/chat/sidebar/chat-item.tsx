@@ -5,7 +5,7 @@ import { MdDelete, MdEdit } from "react-icons/md";
 
 interface ChatItemProps {
   chat: {
-    id: number;
+    id: string; // Changed from number to string
     title: string;
     timestamp: string;
     preview: string;
@@ -17,8 +17,8 @@ interface ChatItemProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onDropdownChange: (isOpen: boolean) => void;
-  onRename?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onRename?: (id: string) => void; // Changed from number to string
+  onDelete?: (id: string) => void; // Changed from number to string
 }
 
 export const ChatItem = ({

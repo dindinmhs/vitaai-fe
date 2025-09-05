@@ -8,7 +8,7 @@ export default [
         route("/verify", "routes/verify-email.tsx"), 
     ]),
     layout("../layouts/protected.tsx", [
-    route("/chat", "routes/chat.tsx"),
-    route("/admin", "routes/admin.tsx")
+        route("/chat", "routes/chat.tsx"),
+        route("/admin", "routes/admin.tsx")
     ])
 ] satisfies RouteConfig;

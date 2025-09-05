@@ -1,8 +1,10 @@
 import { Logo } from "components/common/logo"
 import { PromptInput } from "./promt-input"
 import TextType from "./text-type"
+import { useUserProfile } from "hooks/user"
 
 export const ChatNew = () => {
+    const {user} = useUserProfile()
     return (
         <>
             {/* Main Chat Area */}
@@ -20,6 +22,7 @@ export const ChatNew = () => {
                             <div className="flex justify-center">
                                 <Logo size="w-16" variant="icon"/>
                             </div>
+                            <h2 className="font-medium text-xl">Halo {user?.name}</h2>
                             <TextType 
                                 text={["Selamat Datang di Vita AI", "Tanyakan gejala"]}
                                 typingSpeed={75}

@@ -4,17 +4,18 @@ import { ChatItem } from "./chat-item";
 interface ChatHistoryProps {
   isExpanded: boolean;
   chatHistory: Array<{
-    id: number;
+    id: string;
     title: string;
     timestamp: string;
     preview: string;
   }>;
-  hoveredChat: number | null;
-  openDropdown: number | null;
-  onChatHover: (id: number | null) => void;
-  onDropdownChange: (chatId: number | null) => void;
-  onRename?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  hoveredChat: string | null;
+  openDropdown: string | null;
+  onChatHover: (id: string | null) => void;
+  onDropdownChange: (chatId: string | null) => void;
+  onRename?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  loading?: boolean;
 }
 
 export const ChatHistory = ({
@@ -25,7 +26,8 @@ export const ChatHistory = ({
   onChatHover,
   onDropdownChange,
   onRename,
-  onDelete
+  onDelete,
+  loading = false
 }: ChatHistoryProps) => {
   return (
     <div className="flex-1 overflow-hidden">
@@ -44,7 +46,20 @@ export const ChatHistory = ({
       </AnimatePresence>
 
       <div className="px-2 space-y-1 overflow-y-auto h-full pb-20">
-        {chatHistory.map((chat, index) => (
+        {loading && isExpanded && (
+          <div className="px-3 py-4 text-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500 mx-auto"></div>
+            <p className="text-sm text-gray-500 mt-2">Memuat riwayat chat...</p>
+          </div>
+        )}
+        
+        {!loading && chatHistory.length === 0 && isExpanded && (
+          <div className="px-3 py-4 text-center">
+            <p className="text-sm text-gray-500">Belum ada riwayat chat</p>
+          </div>
+        )}
+
+        {!loading && chatHistory.map((chat, index) => (
           <ChatItem
             key={chat.id}
             chat={chat}

@@ -9,11 +9,13 @@ interface ProfileSectionProps {
     name: string;
     email: string;
     avatar: string;
+    imgUrl?: string;
   };
   isDropdownOpen: boolean;
   onDropdownChange: (isOpen: boolean) => void;
   onSettings?: () => void;
   onLogout?: () => void;
+  loading?: boolean;
 }
 
 export const ProfileSection = ({
@@ -22,7 +24,8 @@ export const ProfileSection = ({
   isDropdownOpen,
   onDropdownChange,
   onSettings,
-  onLogout
+  onLogout,
+  loading = false
 }: ProfileSectionProps) => {
   return (
     <div className="border-t border-gray-200 p-4">
@@ -34,9 +37,19 @@ export const ProfileSection = ({
             whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
             className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors w-full"
           >
-            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-sm text-white">
-              {user.avatar}
+            {/* Avatar with image support */}
+            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-sm text-white overflow-hidden">
+              {user.imgUrl ? (
+                <img 
+                  src={user.imgUrl} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                user.avatar
+              )}
             </div>
+            
             <AnimatePresence>
               {isExpanded && (
                 <motion.div
@@ -46,8 +59,12 @@ export const ProfileSection = ({
                   transition={{ duration: 0.2 }}
                   className="flex-1 min-w-0"
                 >
-                  <p className="text-sm font-medium truncate text-gray-700">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className={`text-sm font-medium truncate text-gray-700 ${loading ? 'animate-pulse' : ''}`}>
+                    {user.name}
+                  </p>
+                  <p className={`text-xs text-gray-500 truncate ${loading ? 'animate-pulse' : ''}`}>
+                    {user.email}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
