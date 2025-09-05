@@ -5,7 +5,7 @@ import { NewChatButton } from "./sidebar/new-chat-button";
 import { ChatHistory } from "./sidebar/chat-history";
 import { ProfileSection } from "./sidebar/profile-section";
 import { ProfileModal } from "../common/profile-modal";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import useAuthStore from "hooks/auth";
 import { useAutoFetchUserProfile } from "hooks/user";
 import { useAutoFetchConversations, useConversations } from "hooks/conversation";
@@ -18,6 +18,8 @@ export const SideBar = () => {
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { conversationId } = useParams();
 
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
@@ -74,13 +76,26 @@ export const SideBar = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      if (confirm('Are you sure you want to delete this conversation?')) {
-        await deleteConversation(id);
-        console.log("Deleted chat:", id);
+      const confirmDelete = confirm('Are you sure you want to delete this conversation?');
+      if (!confirmDelete) return;
+
+      setDeletingId(id);
+      setOpenDropdown(null); // Close dropdown
+      
+      await deleteConversation(id);
+      
+      console.log("Deleted chat:", id);
+      
+      // If we're currently viewing the deleted conversation, navigate to new chat
+      if (conversationId === id) {
+        navigate('/chat', { replace: true });
       }
+      
     } catch (error) {
       console.error("Failed to delete chat:", error);
       alert('Failed to delete conversation');
+    } finally {
+      setDeletingId(null);
     }
   };
 

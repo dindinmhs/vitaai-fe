@@ -12,12 +12,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const { conversation, loading, error } = useAutoFetchConversationDetail(conversationId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Debug log
-  useEffect(() => {
-    console.log('ChatConversation mounted with ID:', conversationId);
-    console.log('Current conversation state:', { conversation, loading, error });
-  }, [conversationId, conversation, loading, error]);
-
   // Auto scroll to bottom when new messages are added
   useEffect(() => {
     if (conversation?.messages?.length) {
@@ -32,18 +26,15 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col">
-        {/* Header Skeleton */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="h-6 bg-gray-200 rounded animate-pulse mb-2 w-48"></div>
           <div className="h-4 bg-gray-100 rounded animate-pulse w-32"></div>
         </div>
         
-        {/* Loading Content */}
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-4"></div>
             <p className="text-gray-500">Memuat percakapan...</p>
-            <p className="text-xs text-gray-400 mt-2">ID: {conversationId}</p>
           </div>
         </div>
       </div>
@@ -66,7 +57,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
             </div>
             <h2 className="text-xl font-semibold text-gray-800 mb-2">Gagal Memuat Percakapan</h2>
             <p className="text-gray-600 mb-2">{error}</p>
-            <p className="text-xs text-gray-400">ID: {conversationId}</p>
           </div>
         </div>
       </div>
@@ -88,8 +78,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-800 mb-2">Percakapan Tidak Ditemukan</h2>
-            <p className="text-gray-600 mb-2">Percakapan yang Anda cari tidak ditemukan atau telah dihapus.</p>
-            <p className="text-xs text-gray-400">ID: {conversationId}</p>
+            <p className="text-gray-600">Percakapan yang Anda cari tidak ditemukan atau telah dihapus.</p>
           </div>
         </div>
       </div>
@@ -108,7 +97,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
             </p>
           </div>
           
-          {/* Header Actions */}
           <div className="flex items-center space-x-2">
             <button
               onClick={scrollToBottom}
@@ -154,7 +142,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
             )}
           </AnimatePresence>
           
-          {/* Scroll anchor */}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -162,7 +149,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       {/* Chat Input Area */}
       <div className="bg-white border-t border-gray-200 p-4 shadow-sm">
         <div className="max-w-5xl mx-auto">
-          <PromptInput/>
+          <PromptInput conversationId={conversationId} />
         </div>
       </div>
     </div>
