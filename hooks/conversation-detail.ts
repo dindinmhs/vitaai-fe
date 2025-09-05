@@ -229,5 +229,5 @@ export const useAutoFetchConversationDetail = (conversationId: string) => {
 
   return { conversation, loading, error, refetch: fetchConversation };
 };
-
+export { useConversationDetailStore };
 export default useConversationDetailStore;

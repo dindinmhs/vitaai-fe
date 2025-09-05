@@ -51,11 +51,11 @@ export const useChat = () => {
       
       if (contentType?.includes('text/event-stream')) {
         // Handle streaming response
-        await handleStreamingResponse(response, conversationId);
+        await handleStreamingResponse(response, conversationId, isNewConversation);
       } else {
         // Handle regular JSON response
         const data = await response.json();
-        handleJsonResponse(data, conversationId);
+        handleJsonResponse(data, conversationId, isNewConversation);
       }
 
     } catch (error) {
@@ -66,7 +66,11 @@ export const useChat = () => {
     }
   };
 
-  const handleStreamingResponse = async (response: Response, currentConversationId?: string) => {
+  const handleStreamingResponse = async (
+    response: Response, 
+    currentConversationId?: string,
+    isNewConversation: boolean = false
+  ) => {
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
     
@@ -74,6 +78,7 @@ export const useChat = () => {
     let userMessage: any = null;
     let botMessageId: string | null = null;
     let botContent = '';
+    let shouldNavigate = false;
 
     if (!reader) throw new Error('Failed to get response reader');
 
@@ -94,6 +99,11 @@ export const useChat = () => {
                 case 'metadata':
                   // Handle conversation creation/update
                   actualConversationId = data.conversation.id;
+                  
+                  // Check if we need to navigate (new conversation)
+                  if (isNewConversation && !currentConversationId) {
+                    shouldNavigate = true;
+                  }
                   
                   // Get existing conversation
                   const existingConversation = conversations[actualConversationId];
@@ -116,11 +126,6 @@ export const useChat = () => {
                   userMessage = data.userMessage;
                   addMessage(actualConversationId, userMessage);
 
-                  // Navigate to conversation if it's new
-                  if (!currentConversationId) {
-                    navigate(`/chat/${actualConversationId}`, { replace: true });
-                  }
-
                   // Create placeholder bot message
                   botMessageId = `temp-${Date.now()}`;
                   const placeholderBotMessage = {
@@ -134,7 +139,6 @@ export const useChat = () => {
                   setStreaming(actualConversationId, true);
                   break;
 
-                // ...rest of the cases remain the same
                 case 'content':
                   if (botMessageId && actualConversationId) {
                     botContent += data.text;
@@ -150,7 +154,15 @@ export const useChat = () => {
                   break;
 
                 case 'end':
-                  setStreaming(actualConversationId!, false);
+                  if (actualConversationId) {
+                    setStreaming(actualConversationId, false);
+                    
+                    // Navigate setelah streaming selesai
+                    if (shouldNavigate) {
+                      console.log('Navigating to new conversation:', actualConversationId);
+                      navigate(`/chat/${actualConversationId}`, { replace: true });
+                    }
+                  }
                   break;
               }
             } catch (parseError) {
@@ -164,7 +176,11 @@ export const useChat = () => {
     }
   };
 
-  const handleJsonResponse = (data: any, conversationId?: string) => {
+  const handleJsonResponse = (
+    data: any, 
+    conversationId?: string, 
+    isNewConversation: boolean = false
+  ) => {
     const actualConversationId = data.conversation.id;
     
     // Preserve existing messages untuk conversation yang sudah ada
@@ -178,7 +194,7 @@ export const useChat = () => {
     });
 
     // Navigate if new conversation
-    if (!conversationId) {
+    if (isNewConversation && !conversationId) {
       navigate(`/chat/${actualConversationId}`, { replace: true });
     }
 
