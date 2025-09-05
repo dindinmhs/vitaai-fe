@@ -53,10 +53,7 @@ export const SideBar = () => {
 
   const handleNewChat = async () => {
     try {
-      const newConversation = await createConversation('New Chat');
-      console.log("Created new chat:", newConversation);
-      // Navigate to new conversation
-      // navigate(`/chat/${newConversation.id}`);
+      navigate(`/chat`);
     } catch (error) {
       console.error("Failed to create new chat:", error);
     }

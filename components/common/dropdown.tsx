@@ -43,16 +43,24 @@ export const DropDown = ({
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
-    }, []);
+    }, [setIsOpen]);
+
+    const handleTriggerClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOpen(!isOpen);
+    };
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button className="w-full" onClick={() => setIsOpen(!isOpen)}>
+            <div onClick={handleTriggerClick}>
                 {trigger}
-            </button>
-            {isOpen && <div className={`absolute z-10 bg-white rounded-md border-2 border-gray-200 overflow-hidden ${otherStyles}`}>
-                {children}
-            </div>}
+            </div>
+            {isOpen && (
+                <div className={`absolute z-50 bg-white rounded-md border border-gray-200 shadow-lg overflow-hidden ${otherStyles}`}>
+                    {children}
+                </div>
+            )}
         </div>
     )
 }

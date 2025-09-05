@@ -2,10 +2,11 @@ import { DropDown } from "components/common/dropdown";
 import { motion } from "framer-motion";
 import { BsThreeDots } from "react-icons/bs";
 import { MdDelete, MdEdit } from "react-icons/md";
+import { useNavigate } from "react-router";
 
 interface ChatItemProps {
   chat: {
-    id: string; // Changed from number to string
+    id: string;
     title: string;
     timestamp: string;
     preview: string;
@@ -17,8 +18,8 @@ interface ChatItemProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onDropdownChange: (isOpen: boolean) => void;
-  onRename?: (id: string) => void; // Changed from number to string
-  onDelete?: (id: string) => void; // Changed from number to string
+  onRename?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export const ChatItem = ({
@@ -33,18 +34,29 @@ export const ChatItem = ({
   onRename,
   onDelete
 }: ChatItemProps) => {
+  const navigate = useNavigate();
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    // Jangan navigate jika click berasal dari dropdown area
+    if ((e.target as HTMLElement).closest('.dropdown-trigger')) {
+      return;
+    }
+    navigate(`/chat/${chat.id}`);
+  };
+
   return (
     <motion.div
       key={chat.id}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
-      className="px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors relative h-10"
+      className="px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors relative h-10 cursor-pointer"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={handleChatClick}
     >
       {isExpanded && (
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center h-full">
           {/* Title Section */}
           <div className="flex-1 min-w-0 pr-2">
             <p className="text-sm font-medium truncate hover:text-gray-900 text-gray-700">
@@ -54,7 +66,7 @@ export const ChatItem = ({
           
           {/* Three dots menu */}
           {(isHovered || isDropdownOpen) && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 dropdown-trigger">
               <DropDown
                 isOpen={isDropdownOpen}
                 onOpenChange={onDropdownChange}
@@ -65,7 +77,7 @@ export const ChatItem = ({
                 }
                 otherStyles="w-36 -translate-x-28"
               >
-                <div>
+                <div className="py-1">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
