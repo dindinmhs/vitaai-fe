@@ -4,6 +4,7 @@ import { SidebarHeader } from "./sidebar/header";
 import { NewChatButton } from "./sidebar/new-chat-button";
 import { ChatHistory } from "./sidebar/chat-history";
 import { ProfileSection } from "./sidebar/profile-section";
+import { ProfileModal } from "../common/profile-modal";
 import useAuthStore from "hooks/auth";
 import { useNavigate } from "react-router";
 
@@ -12,6 +13,8 @@ export const SideBar = () => {
   const [hoveredChat, setHoveredChat] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const {clearUser} = useAuthStore()
   const navigate = useNavigate()
@@ -27,11 +30,19 @@ export const SideBar = () => {
     { id: 7, title: "API REST vs GraphQL", timestamp: "1 minggu lalu", preview: "Kapan menggunakan REST vs GraphQL?" },
   ];
 
-  const user = {
+  // Filter chat berdasarkan search
+  const filteredChatHistory = chatHistory.filter(
+    (chat) =>
+      chat.title.toLowerCase().includes(search.toLowerCase()) ||
+      chat.preview.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // User data - dalam implementasi nyata, ini akan datang dari context/props
+  const [userData, setUserData] = useState({
     name: "John Doe",
     email: "john@example.com",
     avatar: "JD"
-  };
+  });
 
   const handleNewChat = () => {
     console.log("Create new chat");
@@ -46,12 +57,18 @@ export const SideBar = () => {
   };
 
   const handleSettings = () => {
-    console.log("Open settings");
+    setShowProfileModal(true);
   };
 
   const handleLogout = () => {
     clearUser()
     navigate("/", {replace:true})
+  };
+
+  const handleUpdateProfile = (updatedUser: typeof userData) => {
+    setUserData(updatedUser);
+    // Dalam implementasi nyata, simpan ke context/server
+    console.log("Profile updated:", updatedUser);
   };
 
   return (
@@ -71,9 +88,22 @@ export const SideBar = () => {
         onClick={handleNewChat} 
       />
 
+      {/* Search chat */}
+      {isExpanded && (
+        <div className="px-4 pb-2">
+          <input
+            type="text"
+            placeholder="Cari chat..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 mb-2 text-sm"
+          />
+        </div>
+      )}
+
       <ChatHistory
         isExpanded={isExpanded}
-        chatHistory={chatHistory}
+        chatHistory={filteredChatHistory}
         hoveredChat={hoveredChat}
         openDropdown={openDropdown}
         onChatHover={setHoveredChat}
@@ -84,11 +114,18 @@ export const SideBar = () => {
 
       <ProfileSection
         isExpanded={isExpanded}
-        user={user}
+        user={userData}
         isDropdownOpen={openProfileDropdown}
         onDropdownChange={setOpenProfileDropdown}
         onSettings={handleSettings}
         onLogout={handleLogout}
+      />
+
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={userData}
+        onUpdateProfile={handleUpdateProfile}
       />
     </motion.div>
   );

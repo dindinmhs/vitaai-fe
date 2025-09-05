@@ -36,9 +36,15 @@ export const SignInForm = () => {
           accessToken: data.accessToken,
           userRole: data.userRole,
         });
+        
+        // Redirect berdasarkan role user
+        if (data.userRole === "ADMIN") {
+          await navigate("/admin");
+        } else {
+          await navigate("/chat");
+        }
       }
       formRef.current?.reset();
-      await navigate("/chat")
     } catch (err) {
       formRef.current?.reset();
       console.error(err);
