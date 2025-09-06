@@ -11,6 +11,7 @@ export default [
         route("/chat", "routes/chat.tsx"),
         route("/chat/:conversationId", "routes/chat.$conversationId.tsx"),
         route("/admin", "routes/admin.tsx"),
+        route("/profile", "routes/profile.tsx"),
         route("/admin/:id", "routes/admin.$id.tsx")
     ])
 ] satisfies RouteConfig;

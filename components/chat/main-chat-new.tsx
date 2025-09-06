@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageBubble } from "./bubble";
 import { useEffect, useRef } from "react";
 import useConversationDetailStore from "hooks/conversation-detail";
+import { Logo } from "components/common/logo";
 
 export const ChatNew = () => {
     const { conversations, streaming } = useConversationDetailStore();
@@ -59,10 +60,8 @@ export const ChatNew = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="text-center max-w-2xl mx-auto"
                         >
-                            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-white text-xl">
-                                    V
-                                </div>
+                            <div className="flex justify-center mb-3">
+                            <Logo variant="icon" size="w-16"/>
                             </div>
                             <h2 className="text-3xl font-bold text-gray-800 mb-4">Selamat datang di Vita AI</h2>
                             <p className="text-gray-600 text-lg mb-8">
@@ -96,7 +95,7 @@ export const ChatNew = () => {
             </div>
             
             {/* Chat Input Area */}
-            <div className="bg-white border-t border-gray-200 p-4 shadow-sm">
+            <div className="pb-4">
                 <div className="max-w-5xl mx-auto">
                     <PromptInput isNewConversation={true} />
                 </div>

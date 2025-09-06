@@ -13,107 +13,127 @@ interface MessageBubbleProps {
   index: number;
 }
 
-const parseContent = (content: string) => {
-  // Split content by lines and process each line
+interface ParsedElement {
+  type: 'text' | 'bold' | 'list' | 'header' | 'numbered_list' | 'disclaimer' | 'bold_header';
+  content: string;
+  children?: ParsedElement[];
+}
+
+const parseContent = (content: string): ParsedElement[] => {
   const lines = content.split('\n');
-  const processedLines: { type: 'text' | 'bold' | 'list' | 'header', content: string }[] = [];
+  const processedLines: ParsedElement[] = [];
   
   lines.forEach(line => {
     const trimmedLine = line.trim();
     
     if (!trimmedLine) return; // Skip empty lines
     
-    // Handle text with **word** inside regular text
-    if (trimmedLine.includes('**') && !trimmedLine.startsWith('**')) {
-      // Replace **word** with processed segments
-      const segments = trimmedLine.split(/(\*\*[^*]+\*\*)/g);
-      let hasProcessedSegments = false;
-      
-      segments.forEach(segment => {
-        if (segment.match(/^\*\*[^*]+\*\*$/)) {
-          // This is a bold segment
-          processedLines.push({
-            type: 'header',
-            content: segment.slice(2, -2)
-          });
-          hasProcessedSegments = true;
-        } else if (segment.trim()) {
-          // This is regular text
-          processedLines.push({
-            type: 'text',
-            content: segment.trim()
-          });
-          hasProcessedSegments = true;
-        }
-      });
-      
-      if (hasProcessedSegments) return;
-    }
-    
-    // Pattern: **Text** (standalone headers)
-    if (trimmedLine.match(/^\*\*[^*]+\*\*$/)) {
+    // Handle disclaimer (starts with ⚠️)
+    if (trimmedLine.startsWith('⚠️')) {
       processedLines.push({
-        type: 'header',
-        content: trimmedLine.slice(2, -2)
-      });
-    }
-    // Pattern: **Text:** or **Text**, (headers with colon or comma)
-    else if (trimmedLine.match(/^\*\*[^*]+\*\*[,:]\s*(.*)/)) {
-      const match = trimmedLine.match(/^\*\*([^*]+)\*\*[,:]\s*(.*)/);
-      if (match) {
-        processedLines.push({
-          type: 'header',
-          content: match[1].trim()
-        });
-        if (match[2]) {
-          processedLines.push({
-            type: 'text',
-            content: match[2]
-          });
-        }
-      }
-    }
-    // Pattern: *Text**: or *Text**,
-    else if (trimmedLine.match(/^\*[^*]+\*\*[,:]\s*(.*)/)) {
-      const match = trimmedLine.match(/^\*([^*]+)\*\*[,:]\s*(.*)/);
-      if (match) {
-        processedLines.push({
-          type: 'header',
-          content: match[1].trim()
-        });
-        if (match[2]) {
-          processedLines.push({
-            type: 'text',
-            content: match[2]
-          });
-        }
-      }
-    }
-    // Pattern: List items with *   or - 
-    else if (trimmedLine.match(/^(\*\s{3}|- )/)) {
-      const content = trimmedLine.startsWith('*   ') ? trimmedLine.slice(4) : trimmedLine.slice(2);
-      processedLines.push({
-        type: 'list',
-        content: content.trim()
-      });
-    }
-    // Pattern: Any text starting with * (but not ** or list)
-    else if (trimmedLine.startsWith('*') && !trimmedLine.startsWith('**')) {
-      processedLines.push({
-        type: 'bold',
-        content: trimmedLine.slice(1).trim()
-      });
-    }
-    // Regular text
-    else {
-      processedLines.push({
-        type: 'text',
+        type: 'disclaimer',
         content: trimmedLine
       });
+      return;
     }
+    
+    // Handle numbered lists (1. 2. 3.)
+    if (trimmedLine.match(/^\d+\.\s+/)) {
+      const content = trimmedLine.replace(/^\d+\.\s+/, '');
+      processedLines.push({
+        type: 'numbered_list',
+        content: content
+      });
+      return;
+    }
+    
+    // Handle bullet lists (- or *)
+    if (trimmedLine.match(/^[-*]\s+/)) {
+      const content = trimmedLine.replace(/^[-*]\s+/, '');
+      processedLines.push({
+        type: 'list',
+        content: content
+      });
+      return;
+    }
+    
+    // Handle headers (### without dot at the end)
+    if (trimmedLine.startsWith('###')) {
+      const content = trimmedLine.replace(/^###\s*/, '').replace(/\.$/, '');
+      processedLines.push({
+        type: 'header',
+        content: content
+      });
+      return;
+    }
+    
+    // Handle **Bold:** headers (bold text ending with colon and nothing else after)
+    const boldHeaderMatch = trimmedLine.match(/^\*\*([^*]+)\*\*:\s*$/);
+    if (boldHeaderMatch) {
+      processedLines.push({
+        type: 'bold_header',
+        content: boldHeaderMatch[1] + ':' // Keep the colon in content
+      });
+      return;
+    }
+    
+    // Handle **Bold** headers (bold text with nothing else on the line)
+    const standaloneBoldMatch = trimmedLine.match(/^\*\*([^*]+)\*\*\s*$/);
+    if (standaloneBoldMatch) {
+      processedLines.push({
+        type: 'bold_header',
+        content: standaloneBoldMatch[1] // No colon for standalone bold
+      });
+      return;
+    }
+    
+    // Regular text (may contain inline **bold** markdown)
+    processedLines.push({
+      type: 'text',
+      content: trimmedLine
+    });
   });
   
   return processedLines;
+};
+
+// Component to render text with inline markdown
+const MarkdownText = ({ text }: { text: string }) => {
+  // Split text by **bold** patterns
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.match(/^\*\*[^*]+\*\*$/)) {
+          // This is bold text
+          const boldText = part.slice(2, -2);
+          return (
+            <strong key={index} className="font-bold text-gray-900">
+              {boldText}
+            </strong>
+          );
+        }
+        
+        // Handle single * for italic (but not part of **)
+        const italicParts = part.split(/(\*[^*]+\*)/g);
+        
+        return italicParts.map((italicPart, italicIndex) => {
+          if (italicPart.match(/^\*[^*]+\*$/) && !part.includes('**')) {
+            // Italic text
+            return (
+              <em key={`${index}-${italicIndex}`} className="italic text-gray-700">
+                {italicPart.slice(1, -1)}
+              </em>
+            );
+          }
+          
+          // Regular text
+          return <span key={`${index}-${italicIndex}`}>{italicPart}</span>;
+        });
+      })}
+    </>
+  );
 };
 
 const extractDomainFromUrl = (url: string) => {
@@ -161,31 +181,67 @@ export const MessageBubble = ({ message, index }: MessageBubbleProps) => {
           {/* Message Content */}
           {parsedContent?.map((item, idx) => (
             <div key={idx}>
+              {/* Regular ### Headers */}
               {item.type === 'header' && (
                 <div className="mb-3">
-                  <h3 className="text-base font-bold text-gray-800 bg-emerald-50 px-3 py-2 rounded-lg border-l-4 border-emerald-500">
+                  <h3 className="text-lg font-bold text-gray-800 bg-emerald-50 px-4 py-3 rounded-lg border-l-4 border-emerald-500">
+                    <MarkdownText text={item.content} />
+                  </h3>
+                </div>
+              )}
+              
+              {/* **Bold:** Headers (Green Background) */}
+              {item.type === 'bold_header' && (
+                <div className="mb-3">
+                  <h3 className="text-lg font-bold text-gray-800 bg-emerald-50 px-4 py-3 rounded-lg border-l-4 border-emerald-500">
                     {item.content}
                   </h3>
                 </div>
               )}
               
-              {item.type === 'bold' && (
-                <p className="font-semibold text-gray-800 mb-2">
-                  {item.content}
-                </p>
-              )}
-              
+              {/* Regular Text with Inline Markdown */}
               {item.type === 'text' && (
                 <p className="text-gray-700 leading-relaxed mb-2">
-                  {item.content}
+                  <MarkdownText text={item.content} />
                 </p>
               )}
               
+              {/* Bullet Lists */}
               {item.type === 'list' && (
                 <div className="ml-4 flex items-start space-x-3 mb-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 flex-shrink-0"></div>
                   <p className="text-gray-700 leading-relaxed flex-1">
-                    {item.content}
+                    <MarkdownText text={item.content} />
+                  </p>
+                </div>
+              )}
+              
+              {/* Numbered Lists */}
+              {item.type === 'numbered_list' && (
+                <div className="ml-4 flex items-start space-x-3 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center mt-1 flex-shrink-0">
+                    {(() => {
+                      // Calculate the actual number for this numbered item
+                      let numberCount = 0;
+                      for (let i = 0; i <= idx; i++) {
+                        if (parsedContent[i].type === 'numbered_list') {
+                          numberCount++;
+                        }
+                      }
+                      return numberCount;
+                    })()}
+                  </div>
+                  <p className="text-gray-700 leading-relaxed flex-1">
+                    <MarkdownText text={item.content} />
+                  </p>
+                </div>
+              )}
+              
+              {/* Disclaimer */}
+              {item.type === 'disclaimer' && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 leading-relaxed">
+                    <MarkdownText text={item.content} />
                   </p>
                 </div>
               )}

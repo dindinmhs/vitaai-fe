@@ -105,7 +105,7 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
   };
 
   const handleSettings = () => {
-    setShowProfileModal(true);
+    navigate('/profile')
   };
 
   const handleLogout = () => {

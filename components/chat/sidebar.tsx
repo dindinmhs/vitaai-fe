@@ -10,6 +10,7 @@ import useAuthStore from "hooks/auth";
 import { useAutoFetchUserProfile } from "hooks/user";
 import { useAutoFetchConversations, useConversations } from "hooks/conversation";
 import { formatConversationForUI } from "utils/conversation";
+import useUserProfileStore from "hooks/user"; 
 
 export const SideBar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -26,6 +27,12 @@ export const SideBar = () => {
   
   // Auto-fetch user profile
   const { user: userProfile, loading: profileLoading } = useAutoFetchUserProfile();
+
+  // Listen to profile store changes for real-time updates
+  const profileStoreUser = useUserProfileStore(state => state.user);
+
+  // Use store user if available, fallback to hook user
+  const currentUser = profileStoreUser || userProfile;
   
   // Auto-fetch conversations
   const { conversations, loading: conversationsLoading } = useAutoFetchConversations();
@@ -41,16 +48,17 @@ export const SideBar = () => {
       chat.preview.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Transform user data untuk komponen
-  const userData = userProfile ? {
-    name: userProfile.name,
-    email: userProfile.email,
-    avatar: userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-    imgUrl: userProfile.imgUrl
+  // Transform user data untuk komponen - FIX: Gunakan currentUser dan add null checks
+  const userData = currentUser ? {
+    name: currentUser.name || "User",
+    email: currentUser.email || "email@example.com",
+    avatar: currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase() : "U",
+    imgUrl: currentUser.imgUrl
   } : {
     name: "Loading...",
     email: "Loading...",
-    avatar: "L"
+    avatar: "L",
+    imgUrl: undefined
   };
 
   const handleNewChat = async () => {
@@ -100,7 +108,7 @@ export const SideBar = () => {
   };
 
   const handleSettings = () => {
-    setShowProfileModal(true);
+    navigate("/profile");
   };
 
   const handleLogout = () => {
@@ -159,14 +167,6 @@ export const SideBar = () => {
         onLogout={handleLogout}
         loading={profileLoading}
       />
-
-      {userProfile && (
-        <ProfileModal
-          isOpen={showProfileModal}
-          onClose={() => setShowProfileModal(false)}
-          user={userProfile}
-        />
-      )}
     </motion.div>
   );
 };

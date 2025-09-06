@@ -147,8 +147,8 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       </div>
       
       {/* Chat Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4 shadow-sm">
-        <div className="max-w-5xl mx-auto">
+      <div className="bg-transparent pb-4">
+        <div className="max-w-5xl mx-auto bg-transparent">
           <PromptInput conversationId={conversationId} />
         </div>
       </div>
