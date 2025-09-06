@@ -15,6 +15,7 @@ interface UseMedicalEntriesResult {
   fetchMedicalEntries: () => Promise<void>;
   refetch: () => void;
   isUsingFallback: boolean;
+  lastUpdate: number;
 }
 
 // Fallback data berdasarkan response yang Anda berikan
@@ -62,8 +63,10 @@ const useMedicalEntries = (): UseMedicalEntriesResult => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
   const fetchMedicalEntries = async () => {
+    console.log('Starting fetchMedicalEntries...');
     setLoading(true);
     setError(null);
     setIsUsingFallback(false);
@@ -71,8 +74,9 @@ const useMedicalEntries = (): UseMedicalEntriesResult => {
     try {
       // Gunakan API client yang sudah dikonfigurasi dengan environment variable
       const response = await apiClient.get<MedicalEntry[]>('/medicalentry');
+      console.log('Successfully fetched medical entries via API client:', response.data);
       setMedicalEntries(response.data);
-      console.log('Successfully fetched medical entries:', response.data);
+      setLastUpdate(Date.now());
     } catch (err: any) {
       console.warn('Failed to fetch from configured API:', err.message);
       
@@ -81,8 +85,9 @@ const useMedicalEntries = (): UseMedicalEntriesResult => {
         const fallbackResponse = await fetch('http://localhost:3000/medicalentry');
         if (fallbackResponse.ok) {
           const data = await fallbackResponse.json();
-          setMedicalEntries(data);
           console.log('Successfully fetched from localhost fallback:', data);
+          setMedicalEntries(data);
+          setLastUpdate(Date.now());
         } else {
           throw new Error('Localhost API juga tidak tersedia');
         }
@@ -91,13 +96,16 @@ const useMedicalEntries = (): UseMedicalEntriesResult => {
         setMedicalEntries(fallbackData);
         setIsUsingFallback(true);
         setError(null); // Clear error jika pakai fallback
+        setLastUpdate(Date.now());
       }
     } finally {
       setLoading(false);
+      console.log('fetchMedicalEntries completed');
     }
   };
 
   const refetch = () => {
+    console.log('Refetching medical entries...');
     fetchMedicalEntries();
   };
 
@@ -111,7 +119,8 @@ const useMedicalEntries = (): UseMedicalEntriesResult => {
     error,
     fetchMedicalEntries,
     refetch,
-    isUsingFallback
+    isUsingFallback,
+    lastUpdate
   };
 };
 

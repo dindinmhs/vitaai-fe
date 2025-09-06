@@ -5,9 +5,10 @@ import apiClient from "../../services/api-service";
 
 interface AdminContentProps {
   medicalEntryId: string;
+  onRefresh?: () => void;
 }
 
-export const AdminContent = ({ medicalEntryId }: AdminContentProps) => {
+export const AdminContent = ({ medicalEntryId, onRefresh }: AdminContentProps) => {
   const navigate = useNavigate();
   const { medicalEntry: selectedData, loading: detailLoading, error, refetch } = useMedicalEntryDetail(medicalEntryId);
   
@@ -82,10 +83,23 @@ export const AdminContent = ({ medicalEntryId }: AdminContentProps) => {
       }
 
       setIsModified(false);
-      refetch(); // Refresh data setelah save
       
-      // Tampilkan notifikasi sukses (opsional)
+      // Tampilkan notifikasi sukses
       console.log('Data berhasil disimpan!');
+      alert('Data berhasil disimpan!');
+      
+      // Refresh data secara async
+      setTimeout(() => {
+        // Refresh data di parent juga (untuk update sidebar)
+        if (onRefresh) {
+          console.log('Calling parent onRefresh...');
+          onRefresh();
+        }
+        
+        // Refresh data setelah save
+        console.log('Calling local refetch...');
+        refetch();
+      }, 100);
       
     } catch (error: any) {
       console.error('Error saving medical entry:', error);
@@ -106,12 +120,6 @@ export const AdminContent = ({ medicalEntryId }: AdminContentProps) => {
       });
       setIsModified(false);
     }
-  };
-
-  // Publish data
-  const handlePublish = () => {
-    console.log("Publish medical entry:", medicalEntryId);
-    // TODO: Implementasi API call untuk publish
   };
 
   return (
@@ -204,12 +212,6 @@ export const AdminContent = ({ medicalEntryId }: AdminContentProps) => {
                     </button>
                   </div>
                 )}
-                <button
-                  onClick={handlePublish}
-                  className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition hover:bg-emerald-600"
-                >
-                  Publish
-                </button>
                 <div className="text-xs text-gray-500">
                   <div>Created: {new Date(selectedData.createdAt).toLocaleString('id-ID')}</div>
                   <div>Updated: {new Date(selectedData.updatedAt).toLocaleString('id-ID')}</div>

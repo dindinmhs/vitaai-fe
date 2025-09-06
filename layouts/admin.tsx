@@ -12,7 +12,7 @@ interface AdminLayoutProps {
 
 export const AdminLayout = ({ children, selectedId }: AdminLayoutProps) => {
   const navigate = useNavigate();
-  const { medicalEntries, refetch } = useMedicalEntries();
+  const { medicalEntries, refetch, loading, lastUpdate } = useMedicalEntries();
   
   // State untuk modal hasil scraping
   const [showScrapeResult, setShowScrapeResult] = useState(false);
@@ -112,15 +112,50 @@ export const AdminLayout = ({ children, selectedId }: AdminLayoutProps) => {
   };
 
   // Handle delete RAG
-  const handleDelete = (entryId: string) => {
+  const handleDelete = async (entryId: string) => {
     console.log("Delete RAG:", entryId);
-    // TODO: Implementasi delete functionality
+    
+    // Konfirmasi delete
+    if (!confirm('Apakah Anda yakin ingin menghapus medical entry ini?')) {
+      return;
+    }
+    
+    try {
+      // Coba delete dengan API client yang dikonfigurasi
+      try {
+        await apiClient.delete(`/medicalentry/${entryId}`);
+        console.log('Successfully deleted via API client:', entryId);
+      } catch (err: any) {
+        console.warn('Failed to delete via API client:', err.message);
+        
+        // Fallback ke localhost
+        const fallbackResponse = await fetch(`http://localhost:3000/medicalentry/${entryId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!fallbackResponse.ok) {
+          throw new Error('Failed to delete medical entry');
+        }
+        
+        console.log('Successfully deleted via localhost fallback:', entryId);
+      }
+
+      // Refresh data setelah delete berhasil
+      refetch();
+      
+      console.log('Medical entry berhasil dihapus!');
+      
+    } catch (error: any) {
+      console.error('Error deleting medical entry:', error);
+      alert('Gagal menghapus data. Silakan coba lagi.');
+    }
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Admin Sidebar */}
       <AdminSidebar 
+        key={`sidebar-${lastUpdate}`}
         data={medicalEntries}
         selectedId={selectedId || null}
         onSelectItem={handleSelectItem}
@@ -141,6 +176,7 @@ export const AdminLayout = ({ children, selectedId }: AdminLayoutProps) => {
           setScrapeLoading(false);
         }}
         onSave={handleSaveEditedResult}
+        onRefresh={refetch}
         result={scrapeResult}
         loading={scrapeLoading}
       />

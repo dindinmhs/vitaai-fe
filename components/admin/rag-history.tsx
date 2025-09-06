@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DropDown } from "components/common/dropdown";
 import { BsThreeDots } from "react-icons/bs";
 import { MdDelete, MdEdit } from "react-icons/md";
+import React from "react";
 
 interface RagData {
   id: number;
@@ -10,6 +11,7 @@ interface RagData {
   timestamp: string;
   preview: string;
   published: boolean;
+  titleHash?: string;
 }
 
 interface RagHistoryProps {
@@ -25,7 +27,7 @@ interface RagHistoryProps {
   onDelete?: (id: number) => void;
 }
 
-export const RagHistory = ({
+export const RagHistory = React.memo(({
   isExpanded,
   ragHistory,
   hoveredRag,
@@ -57,7 +59,7 @@ export const RagHistory = ({
         <div className="px-2 space-y-1 overflow-y-auto h-full pb-20">
           {ragHistory.map((rag, index) => (
             <motion.div
-              key={`${rag.id}-${selectedId}`}
+              key={`${rag.id}-${rag.titleHash || rag.title}-${selectedId}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
@@ -132,4 +134,6 @@ export const RagHistory = ({
       )}
     </div>
   );
-};
+});
+
+RagHistory.displayName = 'RagHistory';

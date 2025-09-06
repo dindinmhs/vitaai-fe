@@ -3,11 +3,13 @@ import { useNavigate, useParams } from "react-router";
 import { AdminContent } from "../../components/admin/content";
 import { AdminLayout } from "../../layouts/admin";
 import useAuthStore from "../../hooks/auth";
+import useMedicalEntries from "../../hooks/medical-entry";
 
 const AdminWithId: React.FC = () => {
   const { userRole, accessToken } = useAuthStore();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { refetch, lastUpdate } = useMedicalEntries();
 
   useEffect(() => {
     // Jika tidak ada token atau bukan admin, redirect
@@ -29,7 +31,7 @@ const AdminWithId: React.FC = () => {
 
   return (
     <AdminLayout selectedId={id}>
-      <AdminContent medicalEntryId={id} />
+      <AdminContent key={`content-${id}-${lastUpdate}`} medicalEntryId={id} onRefresh={refetch} />
     </AdminLayout>
   );
 };

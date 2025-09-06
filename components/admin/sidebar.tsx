@@ -8,7 +8,6 @@ import { ProfileSection } from "../chat/sidebar/profile-section";
 import { AddRagModal } from "./add-rag-modal";
 import { ProfileModal } from "../common/profile-modal";
 import useAuthStore from "hooks/auth";
-import useMedicalEntries from "hooks/medical-entry";
 
 interface RagData {
   id: string;
@@ -32,7 +31,6 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDelete }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { clearUser } = useAuthStore();
-  const { medicalEntries, loading, error, refetch, isUsingFallback } = useMedicalEntries();
   const [isExpanded, setIsExpanded] = useState(true);
   const [hoveredChat, setHoveredChat] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
@@ -42,8 +40,8 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
   const [showAddModal, setShowAddModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Gunakan medical entries dari API sebagai data utama
-  const ragData = medicalEntries.length > 0 ? medicalEntries : data;
+  // Gunakan data dari props langsung
+  const ragData = data;
 
   // User data - dalam implementasi nyata, ini akan datang dari context/props
   const [userData, setUserData] = useState({
@@ -59,7 +57,8 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
     title: item.title,
     timestamp: new Date(item.createdAt).toLocaleDateString('id-ID'),
     preview: '', // kosongkan preview karena tidak ditampilkan lagi
-    published: false // default false untuk medical entries
+    published: false, // default false untuk medical entries
+    titleHash: item.title + item.updatedAt // untuk memaksa re-render ketika title berubah
   }));
 
   // Filter RAG berdasarkan search (hanya berdasarkan title karena preview sudah dihilangkan dari tampilan)
@@ -74,10 +73,7 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
 
   const handleAddRagSubmit = (url: string) => {
     onAddRag(url);
-    // Refresh medical entries setelah menambah RAG baru
-    setTimeout(() => {
-      refetch();
-    }, 1000);
+    // Tidak perlu refetch di sini karena akan dihandle oleh parent component
   };
 
   const handleRename = (id: number) => {
@@ -93,10 +89,7 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
     const ragItem = ragHistory.find((item: any) => item.id === id);
     if (ragItem) {
       onDelete(ragItem.originalId);
-      // Refresh medical entries setelah delete
-      setTimeout(() => {
-        refetch();
-      }, 1000);
+      // Tidak perlu refetch di sini karena akan dihandle oleh parent component
     }
   };
 
@@ -158,21 +151,16 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
             onChange={e => setSearch(e.target.value)}
             className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 mb-2 text-sm"
           />
-          {loading && (
-            <div className="flex items-center text-xs text-gray-500 mt-2">
-              <div className="animate-spin rounded-full h-3 w-3 border-b border-emerald-500 mr-2"></div>
-              Loading...
-            </div>
-          )}
-          {!loading && !error && medicalEntries.length > 0 && (
+          {ragData.length > 0 && (
             <div className="text-xs text-emerald-600 mt-1">
-              {medicalEntries.length} medical entries
+              {ragData.length} medical entries
             </div>
           )}
         </div>
       )}
 
       <RagHistory
+        key={`rag-history-${ragData.map(item => item.title + item.updatedAt).join('-')}`}
         isExpanded={isExpanded}
         ragHistory={filteredRagHistory}
         hoveredRag={hoveredChat}

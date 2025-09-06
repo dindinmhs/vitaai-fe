@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import apiClient from "../../services/api-service";
 
 interface ScrapeResult {
   title: string;
@@ -12,11 +14,13 @@ interface ScrapeResultModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (editedResult: ScrapeResult) => void;
+  onRefresh?: () => void;
   result: ScrapeResult | null;
   loading: boolean;
 }
 
-export const ScrapeResultModal = ({ isOpen, onClose, onSave, result, loading }: ScrapeResultModalProps) => {
+export const ScrapeResultModal = ({ isOpen, onClose, onSave, onRefresh, result, loading }: ScrapeResultModalProps) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -25,6 +29,7 @@ export const ScrapeResultModal = ({ isOpen, onClose, onSave, result, loading }: 
   });
   const [isModified, setIsModified] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   
   // Update form data ketika result berubah
   useEffect(() => {
@@ -80,6 +85,84 @@ export const ScrapeResultModal = ({ isOpen, onClose, onSave, result, loading }: 
       setIsModified(false);
     }
   };
+
+  const handlePublish = async () => {
+    if (isPublishing) return;
+    
+    setIsPublishing(true);
+    try {
+      // Data yang akan dikirim ke endpoint
+      const publishData = {
+        title: formData.title,
+        content: formData.content,
+        sourceUrl: formData.sourceUrl
+      };
+
+      try {
+        // Coba publish dengan API client yang dikonfigurasi
+        const response = await apiClient.post('/medicalentry', publishData);
+        console.log('Successfully published via API client:', response.data);
+        
+        // Navigate ke entry yang baru dibuat jika ada ID
+        if (response.data && response.data.id) {
+          // Refresh data medical entries dengan delay untuk memastikan data tersimpan
+          if (onRefresh) {
+            setTimeout(() => {
+              onRefresh();
+            }, 500);
+          }
+          navigate(`/admin/${response.data.id}`);
+        }
+        
+      } catch (err: any) {
+        console.warn('Failed to publish via API client:', err.message);
+        
+        // Fallback ke localhost
+        const fallbackResponse = await fetch('http://localhost:3000/medicalentry', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(publishData)
+        });
+        
+        if (!fallbackResponse.ok) {
+          throw new Error('Failed to publish medical entry');
+        }
+        
+        const data = await fallbackResponse.json();
+        console.log('Successfully published via localhost fallback:', data);
+        
+        // Navigate ke entry yang baru dibuat jika ada ID
+        if (data && data.id) {
+          // Refresh data medical entries dengan delay untuk memastikan data tersimpan
+          if (onRefresh) {
+            setTimeout(() => {
+              onRefresh();
+            }, 500);
+          }
+          navigate(`/admin/${data.id}`);
+        }
+      }
+
+      // Tutup modal setelah publish berhasil
+      onClose();
+      
+      // Refresh tambahan setelah modal ditutup untuk memastikan data terbaru
+      if (onRefresh) {
+        setTimeout(() => {
+          onRefresh();
+        }, 1000);
+      }
+      
+    } catch (error: any) {
+      console.error('Error publishing medical entry:', error);
+      alert('Gagal publish data. Silakan coba lagi.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleClose = () => {
     onClose();
   };
@@ -194,12 +277,23 @@ export const ScrapeResultModal = ({ isOpen, onClose, onSave, result, loading }: 
                   </>
                 )}
               </div>
-              <button
-                onClick={handleClose}
-                className="px-6 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors"
-              >
-                Tutup
-              </button>
+              <div className="flex gap-2">
+                {result && !isModified && (
+                  <button
+                    onClick={handlePublish}
+                    disabled={isPublishing || !formData.title || !formData.content || !formData.sourceUrl}
+                    className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold transition hover:bg-green-600 disabled:opacity-50"
+                  >
+                    {isPublishing ? 'Publishing...' : 'Publish'}
+                  </button>
+                )}
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
