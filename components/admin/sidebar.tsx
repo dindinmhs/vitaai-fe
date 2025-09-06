@@ -8,15 +8,16 @@ import { ProfileSection } from "../chat/sidebar/profile-section";
 import { AddRagModal } from "./add-rag-modal";
 import { ProfileModal } from "../common/profile-modal";
 import useAuthStore from "hooks/auth";
+import useMedicalEntries from "hooks/medical-entry";
 
 interface RagData {
   id: string;
   title: string;
-  content: string;
-  sourceUrl: string;
+  content?: string;
+  sourceUrl?: string;
   createdAt: string;
   updatedAt: string;
-  published: boolean;
+  published?: boolean;
 }
 
 interface AdminSidebarProps {
@@ -31,6 +32,7 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDelete }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const { clearUser } = useAuthStore();
+  const { medicalEntries, loading, error, refetch, isUsingFallback } = useMedicalEntries();
   const [isExpanded, setIsExpanded] = useState(true);
   const [hoveredChat, setHoveredChat] = useState<number | null>(null);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
@@ -40,18 +42,8 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
   const [showAddModal, setShowAddModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Debug: pastikan ada data minimum
-  const defaultData = data.length > 0 ? data : [
-    {
-      id: "default-1",
-      title: "Example RAG",
-      content: "This is example content...",
-      sourceUrl: "https://example.com",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      published: false
-    }
-  ];
+  // Gunakan medical entries dari API sebagai data utama
+  const ragData = medicalEntries.length > 0 ? medicalEntries : data;
 
   // User data - dalam implementasi nyata, ini akan datang dari context/props
   const [userData, setUserData] = useState({
@@ -61,20 +53,19 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
   });
 
   // Transform RAG data untuk komponen ChatHistory (ubah string id ke number untuk kompatibilitas)
-  const ragHistory = defaultData.map((item, index) => ({
+  const ragHistory = ragData.map((item: any, index: number) => ({
     id: index + 1, // gunakan index sebagai id number
     originalId: item.id, // simpan id asli
     title: item.title,
     timestamp: new Date(item.createdAt).toLocaleDateString('id-ID'),
-    preview: item.content,
-    published: item.published
+    preview: '', // kosongkan preview karena tidak ditampilkan lagi
+    published: false // default false untuk medical entries
   }));
 
-  // Filter RAG berdasarkan search
+  // Filter RAG berdasarkan search (hanya berdasarkan title karena preview sudah dihilangkan dari tampilan)
   const filteredRagHistory = ragHistory.filter(
-    (item) =>
-      item.title.toLowerCase().includes(search.toLowerCase()) ||
-      item.preview.toLowerCase().includes(search.toLowerCase())
+    (item: any) =>
+      item.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleNewRag = () => {
@@ -83,11 +74,15 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
 
   const handleAddRagSubmit = (url: string) => {
     onAddRag(url);
+    // Refresh medical entries setelah menambah RAG baru
+    setTimeout(() => {
+      refetch();
+    }, 1000);
   };
 
   const handleRename = (id: number) => {
     // Cari originalId berdasarkan id
-    const ragItem = ragHistory.find(item => item.id === id);
+    const ragItem = ragHistory.find((item: any) => item.id === id);
     if (ragItem) {
       onRename(ragItem.originalId);
     }
@@ -95,15 +90,19 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
 
   const handleDelete = (id: number) => {
     // Cari originalId berdasarkan id
-    const ragItem = ragHistory.find(item => item.id === id);
+    const ragItem = ragHistory.find((item: any) => item.id === id);
     if (ragItem) {
       onDelete(ragItem.originalId);
+      // Refresh medical entries setelah delete
+      setTimeout(() => {
+        refetch();
+      }, 1000);
     }
   };
 
   const handleChatClick = (id: number) => {
     // Cari originalId berdasarkan id
-    const ragItem = ragHistory.find(item => item.id === id);
+    const ragItem = ragHistory.find((item: any) => item.id === id);
     console.log("handleChatClick called with id:", id);
     console.log("Found ragItem:", ragItem);
     if (ragItem) {
@@ -159,6 +158,17 @@ const AdminSidebar = ({ data, selectedId, onSelectItem, onAddRag, onRename, onDe
             onChange={e => setSearch(e.target.value)}
             className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 mb-2 text-sm"
           />
+          {loading && (
+            <div className="flex items-center text-xs text-gray-500 mt-2">
+              <div className="animate-spin rounded-full h-3 w-3 border-b border-emerald-500 mr-2"></div>
+              Loading...
+            </div>
+          )}
+          {!loading && !error && medicalEntries.length > 0 && (
+            <div className="text-xs text-emerald-600 mt-1">
+              {medicalEntries.length} medical entries
+            </div>
+          )}
         </div>
       )}
 

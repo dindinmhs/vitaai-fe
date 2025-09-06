@@ -10,6 +10,7 @@ export default [
     layout("../layouts/protected.tsx", [
         route("/chat", "routes/chat.tsx"),
         route("/chat/:conversationId", "routes/chat.$conversationId.tsx"),
-        route("/admin", "routes/admin.tsx")
+        route("/admin", "routes/admin.tsx"),
+        route("/admin/:id", "routes/admin.$id.tsx")
     ])
 ] satisfies RouteConfig;

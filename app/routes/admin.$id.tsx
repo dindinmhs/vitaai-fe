@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router";
-import { AdminMain } from "../../components/admin/main";
+import { useNavigate, useParams } from "react-router";
+import { AdminContent } from "../../components/admin/content";
 import { AdminLayout } from "../../layouts/admin";
 import useAuthStore from "../../hooks/auth";
 
-const AdminRoute: React.FC = () => {
+const AdminWithId: React.FC = () => {
   const { userRole, accessToken } = useAuthStore();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
     // Jika tidak ada token atau bukan admin, redirect
@@ -20,11 +21,17 @@ const AdminRoute: React.FC = () => {
     return null;
   }
 
+  // Jika tidak ada ID, redirect ke admin
+  if (!id) {
+    navigate("/admin", { replace: true });
+    return null;
+  }
+
   return (
-    <AdminLayout>
-      <AdminMain />
+    <AdminLayout selectedId={id}>
+      <AdminContent medicalEntryId={id} />
     </AdminLayout>
   );
 };
 
-export default AdminRoute;
+export default AdminWithId;

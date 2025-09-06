@@ -82,11 +82,6 @@ export const RagHistory = ({
                     }`}>
                       {rag.title}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">{rag.timestamp}</p>
-                    <p className="text-xs text-gray-500 truncate">{rag.preview}</p>
-                    {rag.published && (
-                      <span className="text-xs text-green-600 font-bold">Published</span>
-                    )}
                   </div>
                   
                   {/* Three dots menu */}
